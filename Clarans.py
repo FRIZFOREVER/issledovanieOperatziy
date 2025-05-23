@@ -171,13 +171,22 @@ class CLARANS:
         return marked_df
     
     # calculating disp for given data and solution node
-    def _calc_std(self, data: pd.DataFrame, node: dict):
+    def __calc_std(self, data: pd.DataFrame, node: dict):
         marked_df = self._label_data(data, node)
         dispersions = []
         for label in marked_df['label'].unique():
             temp_df = marked_df[marked_df['label'] == label]
             dispersions.append(np.std(temp_df.values))
         return np.mean(dispersions)
+    
+    def _calc_std(self, data: pd.DataFrame, node: dict):
+        distances = []
+        for _, row in data.iterrows():
+            distances.append(
+                np.min([self._d(row.values, coords) for coords in node.values()])
+            )
+        return np.mean(distances)
+                
     
     def _preprocessing(self, data: pd.DataFrame) -> pd.DataFrame:
         data = self._drop_y(data)
