@@ -1,6 +1,6 @@
 import numpy as np
 
-# Tensor class for basic operations
+# Класс тензор для выполнения матричных/векторных операций
 class Tensor:
     def __init__(self, data, requires_grad=False):
         self.data = np.array(data)
@@ -15,7 +15,7 @@ class Tensor:
         result = Tensor(self.data @ other.data)
         return result
 
-# Base Module class with training mode
+# Базовый класс модуля
 class Module:
     def __init__(self):
         self.training = True
@@ -35,7 +35,7 @@ class Module:
     def parameters(self):
         return []
 
-# Linear Layer class
+# Реализация линейного слоя из базового класса
 class Linear(Module):
     def __init__(self, in_features, out_features):
         super().__init__()
@@ -55,7 +55,7 @@ class Linear(Module):
     def parameters(self):
         return [self.weight, self.bias]
 
-# Dropout Module
+# Реализация модуля дропаута из базового модуля
 class Dropout(Module):
     def __init__(self, p=0.5):
         super().__init__()
@@ -75,7 +75,7 @@ class Dropout(Module):
         # Propagate gradients through the same mask
         return Tensor(grad_output.data * self.mask)
 
-# Neural Network class with training mode propagation
+# Реализация класса нейронной сети из базового модуля
 class NN(Module):
     def __init__(self):
         super().__init__()
@@ -108,7 +108,7 @@ class NN(Module):
     def eval(self):
         self.train(False)
 
-# Mean Squared Error Loss
+# MSE
 class MSELoss:
     def forward(self, y_pred, y_true):
         return Tensor(np.mean((y_pred.data - y_true.data) ** 2))
@@ -116,7 +116,7 @@ class MSELoss:
     def backward(self, y_pred, y_true):
         return Tensor(2 * (y_pred.data - y_true.data) / y_pred.data.size)
 
-# Stochastic Gradient Descent Optimizer
+# SGD оптимайзер
 class SGD:
     def __init__(self, parameters, lr=0.01):
         self.parameters = parameters
