@@ -8,24 +8,72 @@ from numpy.random import PCG64, Generator
 
 @dataclass
 class CLARANSConfig:
-    # search config
+    """
+    Это класс для задания конфигурации класса CLARANS
+    ---
+        Параметры:
+    ===
+        Конфигурация алгоритма
+    ---
+        num_k (int, default=2): желаемое количество кластеров 
+    ---
+        maxneighbour (int, default=10): Критерий остановки одной итерации спуска
+        Сколько попыток нахождения лучшего соседа предпримет алгоритм перед переходом
+        на следующую итерацию
+    ---
+        numlocal (int, default=10): Сколько итераций нахождения локального минимума предпримет алгоритм
+        перед остановкой
+    ---
+        random_state (float, optional): случайное состояние, следует заполнять для детерминированности
+        результата
+    ===
+        Предобработка
+    ---
+        y_col (str, optional): Сюда следует указать название target колонки, если она будет присутсвовать
+        в изначальных данных
+    ===
+        Трансляция - Инициализация через существующее решение
+    --- 
+        mincost (float, optional): первый параметр, возвращаемый из get_translation - обозначает
+        текущее лучшее решение
+    ---
+        best_node: (dict, optional): Словарь нодов текущего лучшего решения
+    ===
+        Режимы отладки
+    ---
+        verbose (Bool, optional): лёгкий режим отладки с комментариями по ключевым моментам алгоритма
+    ---
+        full_debug (Bool, optional): полное комментирование дейсвий алгоритма
+    """
+    # Конфигурация алгоритма
     num_k: int = field(default=2)
     maxneighbour: int = field(default=10)
     numlocal: int = field(default=10)
-    # data preprocessing
+    random_state: float = field(default=np.random.random())
+    # Предобработка данных
     y_col: str = field(default=None)
-    # translation
+    # Трансляция
     mincost: float = field(default=np.inf)
     best_node: dict = field(default_factory=dict)
-    # random state
-    random_state: float = field(default=np.random.random())
-    # misc
+    # Отладка
     verbose: bool = field(default=False)
     full_debug: bool = field(default=False)
 
 
 class CLARANS:
-    def __init__(self, distance_function = distance.euclidean, params: CLARANSConfig = CLARANSConfig()):
+    def __init__(self, 
+                 distance_function = distance.euclidean, 
+                 params: CLARANSConfig = CLARANSConfig()):
+        """Конструктор объекта класса CLARANS
+
+        Параметры:
+        ===
+            distance_function (function(coords1, coords2)) - функция расстояния
+            Получает на вход координаты, возвращает одно число - расстояние между объектами
+            По умолчанию берётся функция евклидова расстояния библиотеки scipy
+        ---
+            params: (CLARANSConfig) - класс конфигурации, см описание класса CLARANSConfig
+        """
         # search config:
         self._numlocal: int = params.numlocal
         self._maxneighbour: int = params.maxneighbour
@@ -43,6 +91,14 @@ class CLARANS:
         self._debug = params.full_debug
 
     def train(self, data: pd.DataFrame):
+        """Функция для тренировки на заданном массиве данных
+
+        Args:
+            data (pd.DataFrame): Датафрейм данных
+
+        Returns:
+            Словарь: Содержит лучшие найденные алгоритмом медойды
+        """
         data = self._preprocessing(data)
         for _ in tqdm(range(self._numlocal)):
             if self._verbose or self._debug:
@@ -70,13 +126,35 @@ class CLARANS:
         
     # return original dataset
     def predict(self, data: pd.DataFrame) -> pd.DataFrame:
+        """Функция, совершающая кластеризацию передаваемых данных
+
+        Args:
+            data (pd.DataFrame): Входные данные
+
+        Returns:
+            pd.DataFrame: Размаркированные данные
+        """
         data = self._preprocessing(data)
         return self._label_data(data, self._best_node)
 
-    def get_solution(self):
+    def get_solution(self) -> pd.DataFrame:
+        """Функция, выводащая текущий лучший результат
+
+        Returns:
+            pd.DataFrame: Лучшие точки с их индексами
+        """
         solution = pd.DataFrame(self._best_node.values())
         solution['index'] = self._best_node.keys()
         return solution
+    
+    def get_translation(self) -> tuple[float, dict]:
+        """Функция, возвращающая данные для трансляции решения
+
+        Returns:
+            tuple[float, dict]: Кортеж значений, представляющих собой текущее решение
+            в порядке: (цена, набор ночек)
+        """
+        return (self._mincost, self._best_node)
     
     # descending from given node
     def _graph_descent(self, data: pd.DataFrame, node: dict) -> dict:
@@ -171,7 +249,7 @@ class CLARANS:
         return marked_df
     
     # calculating disp for given data and solution node
-    def __calc_std(self, data: pd.DataFrame, node: dict):
+    def _calc_std_old(self, data: pd.DataFrame, node: dict):
         marked_df = self._label_data(data, node)
         dispersions = []
         for label in marked_df['label'].unique():
