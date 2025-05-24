@@ -10,6 +10,44 @@ class LinearRegression:
                  grad=None,
                  regularisation=None,
                  lambda_=1):
+        """
+        Это конструктор объекта класса Линейной регрессии
+        ---
+        Параметры:
+            learning_rate (float, optional): Скорость обучения, множитель градиента. 
+            Стандатное значение - 0.01
+        ---
+            n_iterations (int, optional): Количество итераций градиентного спуска
+            Стандартное значение - 100
+        ---
+            loss (_type_, optional): Конфигурабельная функция потерь.
+            Функция, принимающая на вход два numpy array: 
+            y_true - истинные значения
+            y_pred - предсказания модели
+            и возвращающая ошибку предсказания. 
+        ---
+            grad (_type_, optional): Конфигурабельная функция градиента.
+            Функция, принимающая на вход:
+            y_true - истинные значения
+            y_pred - предсказания модели
+            X - Значения на входе
+            n_samples - Количество векторов в батче
+            И возвращающая градиент весов и байеса в формате tuple: 
+            (grad_weights, grad_bias)
+        ---
+            В случае, если в loss и grad были переданы функции - они будут использоваться вместо
+            Стандартной. Иначе используется MSE и grad_MSE соответственно.
+        ---
+            regularisation (_type_, optional): Тип регуляризации, имеет два возможных значения
+            'L1' - применяется Lasso регуляризация - штраф в виде линейной коомбинации весов модели
+            'L2' - применяется Ridge регуляразация - штраф в виде линейной коомбинации квадратов весов модели
+            Стандартное значение - None.
+        ---
+            lambda_ (int, optional): Параметр силы регуляризации.
+            При невыбранном методе регуляризации данный параметр ничего не делает
+            Стандартное значение - 1
+        ---
+        """
         self.__weights__ = None
         self.__bias__ = 0
         self.__learning_rate__ = learning_rate
@@ -23,7 +61,14 @@ class LinearRegression:
         self.__regularisation__ = regularisation
         self.__lambda__ = lambda_
         
-    def fit(self, X, y):
+    def fit(self, X: np.array, y:np.array):
+        """
+        Это метод, включающий в себя обучение модели на данных.
+        ---
+            Параметры:
+            X - Матрица типа numpy array с размерностью Shape: (n_samples, n_features)
+            y - Вектор true значений типа numpy array
+"""
         try:
             n_samples, n_features = X.shape
         except Exception as e:
@@ -50,6 +95,12 @@ class LinearRegression:
             self.__bias__ -= self.__learning_rate__ * grad_bias
 
     def predict(self, X):
+        """
+        Метод, делающий предсказание модели
+        ---
+            Параметры:
+            X - Матрица типа numpy array с размерностью Shape: (n_samples, n_features)
+"""
         return X @ self.__weights__ + self.__bias__
 
     def __mse__(self, y_true: np.array, y_pred: np.array):
