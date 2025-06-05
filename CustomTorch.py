@@ -2,10 +2,9 @@ import numpy as np
 
 # Класс тензор для выполнения матричных/векторных операций
 class Tensor:
-    def __init__(self, data, requires_grad=False):
+    def __init__(self, data):
         self.data = np.array(data)
         self.grad = None
-        self.requires_grad = requires_grad
 
     def __add__(self, other):
         result = Tensor(self.data + other.data)
@@ -37,16 +36,22 @@ class Module:
 
 # Реализация линейного слоя из базового класса
 class Linear(Module):
-    def __init__(self, in_features, out_features):
-        super().__init__()
-        self.weight = Tensor(np.random.randn(in_features, out_features) * 0.01, requires_grad=True)
-        self.bias = Tensor(np.zeros(out_features), requires_grad=True)
+    def __init__(self, in_features: int, out_features: int):
+        """Конструктор класса Linear
 
-    def forward(self, x):
+        Args:
+            in_features (int): Размерность входящего тензора
+            out_features (int): Размерность выхода
+        """
+        super().__init__()
+        self.weight = Tensor(np.random.randn(in_features, out_features) * 0.01)
+        self.bias = Tensor(np.zeros(out_features))
+
+    def forward(self, x: Tensor) -> Tensor:
         self.input = x
         return Tensor(x.data @ self.weight.data + self.bias.data)
 
-    def backward(self, grad_output):
+    def backward(self, grad_output: Tensor):
         self.weight.grad = self.input.data.T @ grad_output.data
         self.bias.grad = np.sum(grad_output.data, axis=0)
         grad_input = grad_output.data @ self.weight.data.T
